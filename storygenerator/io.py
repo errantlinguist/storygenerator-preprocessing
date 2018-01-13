@@ -2,7 +2,7 @@ import itertools
 import logging
 import re
 from collections import defaultdict, namedtuple
-from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, Sequence, Tuple
+from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple
 from typing import IO
 
 import bs4
@@ -15,7 +15,7 @@ SINGLE_BOOK_END_PATTERN = re.compile("The\\s+End\\s+of\\s+the\\s+(?:\\w+)\\s+Boo
 MULTI_BOOK_END_PAR_PATTERNS = tuple(
 	re.compile(regex, re.IGNORECASE) for regex in ("The\\s+End", "of\\s+the\\s+(?:\\w+)\\s+Book\\s+of"))
 CHAPTER_DELIM = "=" * 64
-CHAPTER_HEADER_PATTERN = re.compile("CHAPTER(?:\\s+(\\d+))?:?", re.IGNORECASE)
+CHAPTER_HEADER_PATTERN = re.compile("CHAPTER\\s*(\\d+)?", re.IGNORECASE)
 TITLE_BLACKLIST = frozenset(("cover", "cover page", "title", "title page", "copyright", "copyright page",
 							 "dedication", "contents", "table of contents", "maps", "glossary",
 							 "about the author", "start"))
@@ -108,7 +108,7 @@ class EPUBChapterReader(object):
 		return result
 
 	@classmethod
-	def __read_file(cls, infile_path: str) -> Tuple[str, Tuple[Chapter, ...]]:
+	def __read_file(cls, infile_path: str) -> Tuple[str, List[Chapter]]:
 		book = ebooklib.epub.read_epub(infile_path)
 		book_title = normalize_spacing(book.title)
 		logging.debug("Parsing data for book titled \"%s\".", book_title)
@@ -143,26 +143,25 @@ class EPUBChapterReader(object):
 
 		return result
 
-	# -> DefaultDict[str, Dict[str, Tuple[Chapter, ...]]]:
-	def __call__(self, infile_path) -> Tuple[str, Tuple[Chapter, ...]]:
+	def __call__(self, infile_path) -> Tuple[str, List[Chapter]]:
 		logging.info("Reading \"%s\".", infile_path)
 		book_title, chapters = self.__read_file(infile_path)
-		return book_title, chapters
-
-
-# def __call__(self, infile_paths: Iterable[str]) -> Iterator[Tuple[str, List[Chapter]]]:
-# 	book_file_data = self.__read_book_files(infile_paths)
-#
-# 	logging.info("Read data for %d book(s): %s", len(book_file_data), sorted(book_file_data.keys()))
-#
-# 	for book_title, file_data in book_file_data.items():
-# 		book_chapters = _merge_file_chapters(file_data)
-# 		_validate_chapters(book_chapters)
-# 		print("yield!!!")
-# 		yield book_title, book_chapters
+		merged_chapters = []
+		_merge_file_chapters(chapters, merged_chapters)
+		return book_title, merged_chapters
 
 
 class HTMLChapterReader(object):
+
+	@staticmethod
+	def __merge_file_chapters(file_data: Mapping[str, Sequence[Chapter]]) -> List[Chapter]:
+		result = []
+		sorted_file_data = tuple(sorted(file_data.items(), key=lambda item: natural_keys(item[0])))
+
+		for _, chapters in sorted_file_data:
+			_merge_file_chapters(chapters, result)
+
+		return result
 
 	@classmethod
 	def __read_file(cls, infile_path: str) -> Tuple[str, Tuple[Chapter, ...]]:
@@ -182,7 +181,7 @@ class HTMLChapterReader(object):
 		logging.info("Read data for %d book(s): %s", len(book_file_data), sorted(book_file_data.keys()))
 
 		for book_title, file_data in book_file_data.items():
-			book_chapters = _merge_file_chapters(file_data)
+			book_chapters = self.__merge_file_chapters(file_data)
 			_validate_chapters(book_chapters)
 			yield book_title, book_chapters
 
@@ -201,28 +200,55 @@ def write_chapters(chapters: Iterable[Chapter], out: IO[str]):
 		__write_chapter(chapter, out)
 
 
-def _merge_file_chapters(file_data: Mapping[str, Sequence[Chapter]]) -> List[Chapter]:
-	result = []
-	sorted_file_data = tuple(sorted(file_data.items(), key=lambda item: natural_keys(item[0])))
-
-	for _, chapters in sorted_file_data:
-		for chapter in chapters:
-			if not chapter.seq:
-				assert not chapter.title
-				# Add the pars from this chapter to the last chapter
-				last_chapter = result[len(result) - 1]
-				last_chapter.pars.extend(chapter.pars)
-			else:
-				result.append(chapter)
-
+def _parse_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
+	chapter_headers = soup.find_all("h2")
+	if chapter_headers:
+		result = (_parse_structured_chapter(header) for header in chapter_headers)
+	else:
+		result = _parse_unstructured_chapters(soup)
 	return result
 
 
-def _parse_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
+def _parse_structured_chapter(chapter_header: bs4.Tag) -> Chapter:
+	chapter_header_text = normalize_spacing(chapter_header.text)
+	chapter_header_match = CHAPTER_HEADER_PATTERN.match(chapter_header_text)
+	if chapter_header_match:
+		seq = chapter_header_match.group(1)
+	else:
+		seq = chapter_header_text
+	chapter_titles = chapter_header.find_all_next("h3")
+	if chapter_titles:
+		if len(chapter_titles) > 1:
+			raise ValueError("More than one \"h3\" element found; Cannot parse the structure.")
+		chapter_title = chapter_titles[0]
+		title = normalize_spacing(chapter_title.text)
+		pars = chapter_title.find_all_next("p")
+	else:
+		title = ""
+		pars = chapter_header.find_all_next("p")
+
+	result = Chapter(seq, title)
+	par_following_ctxs = ((par, tuple(par for par in pars[idx:] if par.text.split())) for idx, par in
+						  enumerate(pars, start=1))
+	for par, following_ctx in par_following_ctxs:
+		text = par.text.strip()
+		if text:
+			if _is_book_end(text, following_ctx):
+				break
+			else:
+				# The paragraph is a normal content paragraph; Process it
+				normalized_text = normalize_spacing(text)
+				if normalized_text:
+					result.pars.append(normalized_text)
+	return result
+
+
+def _parse_unstructured_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
 	chapters = []
 	# For some reason, chapter titles are occasionally in "blockquote" elements
-	pars = tuple(soup.find_all(("p", "blockquote")))
-	par_following_ctxs = ((par, pars[idx:]) for idx, par in enumerate(pars, start=1))
+	pars = tuple(soup.find_all(("p", "blockquote", "h2", "h3")))
+	par_following_ctxs = ((par, (par for par in pars[idx:] if par.text.split())) for idx, par in
+						  enumerate(pars, start=1))
 	current_chapter = Chapter()
 	for par, following_ctx in par_following_ctxs:
 		text = par.text.strip()
@@ -253,7 +279,7 @@ def _parse_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
 			elif __is_toc_header(text):
 				# Do nothing with the table of contents
 				# The following paragraph should be related to the TOC, e.g. "Start"; Discard it
-				following_text = following_ctx[0].text
+				following_text = next(following_ctx).text
 				if following_text.lower() in TITLE_BLACKLIST:
 					next(par_following_ctxs)
 			elif _is_book_end(text, following_ctx):
@@ -269,7 +295,7 @@ def _parse_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
 	return (chapter for chapter in chapters if chapter)
 
 
-def _is_book_end(par_text: str, following_ctx: Sequence[bs4.Tag]):
+def _is_book_end(par_text: str, following_ctx: Iterator[bs4.Tag]):
 	single_end_match = SINGLE_BOOK_END_PATTERN.match(par_text)
 	if single_end_match:
 		result = True
@@ -285,6 +311,17 @@ def _is_book_end(par_text: str, following_ctx: Sequence[bs4.Tag]):
 				# Give up and just use the current result
 				break
 	return result
+
+
+def _merge_file_chapters(addend: Sequence[Chapter], augend: MutableSequence[Chapter]):
+	for chapter in addend:
+		if not chapter.seq:
+			assert not chapter.title
+			# Add the pars from this chapter to the last chapter
+			last_chapter = augend[len(augend) - 1]
+			last_chapter.pars.extend(chapter.pars)
+		else:
+			augend.append(chapter)
 
 
 def _validate_chapters(chapters: Iterable[Chapter]):
@@ -325,13 +362,22 @@ def __is_toc_header(text: str) -> bool:
 	return result
 
 
-def __parse_title(par_following_ctxs: Iterator[Tuple[bs4.Tag, Sequence[bs4.Tag]]]) -> str:
+def __find_img_par_idx(pars: Sequence[bs4.Tag]) -> int:
+	result = -1
+	for idx, par in enumerate(pars):
+		if par.find("img"):
+			result = idx
+			break
+	return result
+
+
+def __parse_title(par_following_ctxs: Iterator[Tuple[bs4.Tag, Iterator[bs4.Tag]]]) -> str:
 	# The following paragraph should be the chapter title
-	title_par = next(par_following_ctxs)[0]
+	title_par, following_ctx = next(par_following_ctxs)
 	result = normalize_spacing(title_par.text)
 	while not result and title_par.find("img"):
 		# The element processed was actually the header image for the chapter; Try parsing the next paragraph
-		title_par = next(par_following_ctxs)[0]
+		title_par, following_ctx = next(par_following_ctxs)
 		result = normalize_spacing(title_par.text)
 
 	assert bool(result)
