@@ -145,7 +145,7 @@ class HTMLChapterReader(object):
 			prev_seq_key = seq_key
 
 	def __init__(self):
-		self.books = {}
+		pass
 
 	def __call__(self, infile_paths: Iterable[str]) -> Iterator[Tuple[str, List[Chapter]]]:
 		book_file_data = defaultdict(dict)
