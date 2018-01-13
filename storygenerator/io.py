@@ -68,9 +68,7 @@ class EPUBChapterReader(object):
 	@classmethod
 	def __parse_doc(cls, doc: epub.EpubHtml) -> Iterator[Chapter]:
 		soup = bs4.BeautifulSoup(doc.get_content(), "html.parser")
-		# For some reason, chapter titles are occasionally in "blockquote" elements
-		pars = soup.find_all(("p", "blockquote"))
-		return _parse_pars(pars)
+		return _parse_chapters(soup)
 
 	@classmethod
 	def __parse_navigation(cls, elem: ebooklib.epub.EpubNcx) -> List[_ChapterDescription]:
@@ -169,9 +167,7 @@ class HTMLChapterReader(object):
 			soup = bs4.BeautifulSoup(inf, "html.parser")
 			book_title = normalize_spacing(soup.head.title.text)
 			logging.debug("Parsing data for book titled \"%s\".", book_title)
-			# For some reason, chapter titles are occasionally in "blockquote" elements
-			pars = soup.find_all(("p", "blockquote"))
-			chapters = tuple(_parse_pars(pars))
+			chapters = tuple(_parse_chapters(soup))
 			return book_title, chapters
 
 	def __call__(self, infile_paths: Iterable[str]) -> Iterator[Tuple[str, List[Chapter]]]:
@@ -219,10 +215,11 @@ def _merge_file_chapters(file_data: Mapping[str, Sequence[Chapter]]) -> List[Cha
 	return result
 
 
-def _parse_pars(pars: bs4.ResultSet) -> Iterator[Chapter]:
+def _parse_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
 	chapters = []
+	# For some reason, chapter titles are occasionally in "blockquote" elements
+	pars = iter(soup.find_all(("p", "blockquote")))
 	current_chapter = Chapter()
-	pars = iter(pars)
 	for par in pars:
 		text = par.text.strip()
 		if text:
