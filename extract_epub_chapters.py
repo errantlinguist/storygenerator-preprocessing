@@ -16,6 +16,7 @@ from typing import Iterable, Iterator
 
 import magic
 
+from storygenerator import natural_keys
 from storygenerator.io import EPUBChapterReader, write_chapters
 
 EPUB_MIMETYPE = "application/epub+zip"
@@ -57,7 +58,7 @@ def __main(args):
 	inpaths = args.inpaths
 	print("Will look for data under {}.".format(inpaths), file=sys.stderr)
 	reader = EPUBChapterReader()
-	infiles = tuple(walk_epub_files(inpaths))
+	infiles = tuple(sorted(frozenset(walk_html_files(inpaths)), key=natural_keys))
 	logging.info("Will read %d file(s).", len(infiles))
 	#book_chapters = dict(reader(infiles))
 	book_chapters = dict(reader(infile) for infile in infiles)

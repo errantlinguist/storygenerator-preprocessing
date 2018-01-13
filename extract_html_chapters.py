@@ -14,6 +14,7 @@ import os
 import re
 from typing import Iterable, Iterator
 
+from storygenerator import natural_keys
 from storygenerator.io import HTMLChapterReader, write_chapters
 
 HTML_FILE_EXTENSION_PATTERN = re.compile("\.htm(l)", re.IGNORECASE)
@@ -58,7 +59,7 @@ def __main(args):
 	inpaths = args.inpaths
 	print("Will look for data under {}.".format(inpaths))
 	reader = HTMLChapterReader()
-	infiles = tuple(walk_html_files(inpaths))
+	infiles = tuple(sorted(frozenset(walk_html_files(inpaths)), key=natural_keys))
 	logging.info("Will read %d file(s).", len(infiles))
 	book_chapters = dict(reader(infiles))
 	print("Read data for {} book(s): {}".format(len(book_chapters), sorted(book_chapters.keys())))
