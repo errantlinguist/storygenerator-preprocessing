@@ -41,7 +41,10 @@ def __create_argparser() -> argparse.ArgumentParser:
 						help="The paths to search for files to read.")
 	result.add_argument("-o", "--outdir", metavar="PATH",
 						help="The directory to write the extracted book data to.", required=True)
-	result.add_argument("-d", "--debug", help="increase output verbosity",
+	log_args = result.add_mutually_exclusive_group()
+	log_args.add_argument("-i", "--info", help="increase output verbosity to INFO.",
+						action="store_true")
+	log_args.add_argument("-d", "--debug", help="increase output verbosity to DEBUG.",
 						action="store_true")
 	return result
 
@@ -49,6 +52,8 @@ def __create_argparser() -> argparse.ArgumentParser:
 def __main(args):
 	if args.debug:
 		logging.basicConfig(level=logging.DEBUG)
+	elif args.info:
+		logging.basicConfig(level=logging.INFO)
 
 	inpaths = args.inpaths
 	print("Will look for data under {}.".format(inpaths))
