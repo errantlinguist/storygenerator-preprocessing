@@ -29,7 +29,7 @@ DOC_MIMETYPE = "application/epub+zip"
 # DOC_MIMETYPE = "application/pdf"
 NAV_POINT_TITLE_BLACKLIST = frozenset(("cover", "cover page", "title", "title page", "copyright", "copyright page",
 									   "dedication", "contents", "table of contents", "maps", "glossary",
-									   "about the author"))
+									   "about the author", "start"))
 WHITESPACE_PATTERN = re.compile("\\s+")
 
 ChapterDescription = namedtuple("ChapterDescription", "seq name src")
