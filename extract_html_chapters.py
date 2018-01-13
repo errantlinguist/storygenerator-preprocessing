@@ -58,7 +58,8 @@ def __main(args):
 	inpaths = args.inpaths
 	print("Will look for data under {}.".format(inpaths))
 	reader = HTMLChapterReader()
-	infiles = walk_html_files(inpaths)
+	infiles = tuple(walk_html_files(inpaths))
+	logging.info("Will read %d file(s).", len(infiles))
 	book_chapters = dict(reader(infiles))
 	print("Read data for {} book(s): {}".format(len(book_chapters), sorted(book_chapters.keys())))
 
