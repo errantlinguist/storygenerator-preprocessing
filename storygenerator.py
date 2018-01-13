@@ -3,7 +3,6 @@
 """
 Reads in literature stored in PDF format and uses it to generate new data using a neural network.
 """
-from itertools import chain
 
 __author__ = "Todd Shore <errantlinguist+github@gmail.com>"
 __copyright__ = "Copyright (C) 2018 Todd Shore"
