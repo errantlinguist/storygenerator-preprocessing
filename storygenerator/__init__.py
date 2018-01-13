@@ -44,13 +44,17 @@ class Chapter(object):
 
 	@property
 	def seq_sort_key(self) -> Tuple[int, Tuple[Union[int, str], ...]]:
-		if self.seq.lower() == "prologue":
-			group = -1
-		elif self.seq.lower() == "epilogue":
-			group = 1
-		else:
-			group = 0
-		return group, natural_keys(self.seq)
+		return chapter_seq_sort_key(self.seq)
+
+
+def chapter_seq_sort_key(seq: str) -> Tuple[int, Tuple[Union[int, str], ...]]:
+	if seq.lower() == "prologue":
+		group = -1
+	elif seq.lower() == "epilogue":
+		group = 1
+	else:
+		group = 0
+	return group, natural_keys(seq)
 
 
 def natural_keys(text: str) -> Tuple[Union[int, str], ...]:
