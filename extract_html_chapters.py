@@ -195,7 +195,7 @@ def __create_argparser() -> argparse.ArgumentParser:
 	result = argparse.ArgumentParser(
 		description="Reads in literature chapters stored in HTML format and writes one text file for each book found.")
 	result.add_argument("inpaths", metavar="PATH", nargs='+',
-						help="The paths to search for HTML files to read.")
+						help="The paths to search for files to read.")
 	result.add_argument("-o", "--outdir", metavar="PATH",
 						help="The directory to write the extracted book data to.", required=True)
 	result.add_argument("-d", "--debug", help="increase output verbosity",
