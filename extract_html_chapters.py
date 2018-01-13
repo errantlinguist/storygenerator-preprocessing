@@ -51,7 +51,7 @@ def __main(args):
 		logging.basicConfig(level=logging.DEBUG)
 
 	inpaths = args.inpaths
-	print("Will look for data under {}".format(inpaths))
+	print("Will look for data under {}.".format(inpaths))
 	reader = HTMLChapterReader()
 	infiles = walk_html_files(inpaths)
 	book_chapters = dict(reader(infiles))
