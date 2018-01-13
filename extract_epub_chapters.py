@@ -57,7 +57,8 @@ def __main(args):
 	inpaths = args.inpaths
 	print("Will look for data under {}.".format(inpaths), file=sys.stderr)
 	reader = EPUBChapterReader()
-	infiles = walk_epub_files(inpaths)
+	infiles = tuple(walk_epub_files(inpaths))
+	logging.info("Will read %d file(s).", len(infiles))
 	#book_chapters = dict(reader(infiles))
 	book_chapters = dict(reader(infile) for infile in infiles)
 	print("Read data for {} book(s): {}".format(len(book_chapters), sorted(book_chapters.keys())))
