@@ -26,7 +26,7 @@ WHITESPACE_PATTERN = re.compile("\\s+")
 _MAX_NON_NUMERIC_CHAPTER_SEQ_LENGTH = max(len(seq) for seq in Chapter.NON_NUMERIC_CHAPTER_SEQS)
 
 
-class HtmlChapterReader(object):
+class HTMLChapterReader(object):
 
 	@staticmethod
 	def __is_chapter_header(text: str) -> bool:
@@ -209,7 +209,7 @@ def __main(args):
 
 	inpaths = args.inpaths
 	print("Will look for data under {}".format(inpaths))
-	reader = HtmlChapterReader()
+	reader = HTMLChapterReader()
 	infiles = walk_html_files(inpaths)
 	book_chapters = dict(reader(infiles))
 	print("Read data for {} book(s): {}".format(len(book_chapters), sorted(book_chapters.keys())))
