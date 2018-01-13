@@ -53,7 +53,7 @@ class CorpusReader(object):
 		nav_points_by_src = defaultdict(list)
 		for nav in nav_points:
 			# print(nav)
-			normalized_label = tokenize(nav.navLabel.text).lower()
+			normalized_label = normalize_spacing(nav.navLabel.text).lower()
 			if not normalized_label in NAV_POINT_TITLE_BLACKLIST:
 				# id = nav.attrs["id"]
 				src = nav.content.attrs["src"]
@@ -61,7 +61,7 @@ class CorpusReader(object):
 
 		result = []
 		for src, nav_points in nav_points_by_src.items():
-			joined_label_text = tokenize(" ".join(nav.navLabel.text for nav in nav_points))
+			joined_label_text = normalize_spacing(" ".join(nav.navLabel.text for nav in nav_points))
 			if not joined_label_text.lower() in NAV_POINT_TITLE_BLACKLIST:
 				chapter_seq, chapter_name = parse_chapter_title(joined_label_text)
 				self.chapter_seq_names[chapter_seq] = chapter_name
@@ -76,12 +76,12 @@ class CorpusReader(object):
 		#		print(page)
 
 		book = ebooklib.epub.read_epub(filepath)
-		book_title = tokenize(book.title)
+		book_title = normalize_spacing(book.title)
 		logging.info("Reading book \"%s\".", book_title)
 		self.book_titles.append(book_title)
 		chapter_descs = tuple(
 			desc for elem in book.get_items_of_type(ebooklib.ITEM_NAVIGATION) for desc in self.__parse_navigation(elem))
-		#print(chapter_descs)
+		# print(chapter_descs)
 
 		for desc in chapter_descs:
 			doc = book.get_item_with_href(desc.src)
@@ -120,6 +120,11 @@ def normalize_chapter_seq(seq: str) -> str:
 	return result
 
 
+def normalize_spacing(label: str) -> str:
+	tokens = WHITESPACE_PATTERN.split(label.strip())
+	return " ".join(tokens)
+
+
 def parse_chapter_title(title: str) -> Tuple[str, str]:
 	tokens = WHITESPACE_PATTERN.split(title.strip())
 	if tokens[0].lower() == "chapter":
@@ -141,11 +146,6 @@ def read_epub_files(inpaths: Iterable[str]):
 				if DOC_MIMETYPE == mimetype:
 					print("Reading \"{}\".".format(filepath), file=sys.stderr)
 					reader.read_file(filepath)
-
-
-def tokenize(label: str) -> str:
-	tokens = WHITESPACE_PATTERN.split(label.strip())
-	return " ".join(tokens)
 
 
 def trim_content_beginning(pars: Iterable[bs4.Tag]) -> List[str]:
