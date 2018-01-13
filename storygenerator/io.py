@@ -253,7 +253,9 @@ def _parse_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
 			elif __is_toc_header(text):
 				# Do nothing with the table of contents
 				# The following paragraph should be related to the TOC, e.g. "Start"; Discard it
-				next(par_following_ctxs)
+				following_text = following_ctx[0].text
+				if following_text.lower() in TITLE_BLACKLIST:
+					next(par_following_ctxs)
 			elif _is_book_end(text, following_ctx):
 				break
 			else:
