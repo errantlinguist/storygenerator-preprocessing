@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Reads in literature chapters stored in HTML format and prints one text file for each book found.
+Reads in literature chapters stored in HTML format and writes one text file for each book found.
 """
 
 __author__ = "Todd Shore <errantlinguist+github@gmail.com>"
@@ -193,7 +193,7 @@ def walk_html_files(inpaths: Iterable[str]) -> Iterator[str]:
 
 def __create_argparser() -> argparse.ArgumentParser:
 	result = argparse.ArgumentParser(
-		description="Reads in literature chapters stored in HTML format and prints one text file for each book found.")
+		description="Reads in literature chapters stored in HTML format and writes one text file for each book found.")
 	result.add_argument("inpaths", metavar="PATH", nargs='+',
 						help="The paths to search for HTML files to read.")
 	result.add_argument("-o", "--outdir", metavar="PATH",
