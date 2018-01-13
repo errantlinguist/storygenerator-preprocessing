@@ -82,7 +82,7 @@ class CorpusReader(object):
 		self.book_titles.append(book_title)
 		chapter_descs = tuple(
 			desc for elem in book.get_items_of_type(ebooklib.ITEM_NAVIGATION) for desc in self.__parse_navigation(elem))
-		print(chapter_descs)
+		#print(chapter_descs)
 
 		for desc in chapter_descs:
 			doc = book.get_item_with_href(desc.src)
