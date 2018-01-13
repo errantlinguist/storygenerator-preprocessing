@@ -203,32 +203,43 @@ def write_chapters(chapters: Iterable[Chapter], out: IO[str]):
 		__write_chapter(chapter, out)
 
 
-def _parse_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
-	chapter_headers = soup.find_all("h2")
-	if chapter_headers:
-		result = (_parse_structured_chapter(header) for header in chapter_headers)
-	else:
-		result = _parse_unstructured_chapters(soup)
+def _parse_chapters(soup: bs4.BeautifulSoup) -> Tuple[Chapter, ...]:
+	# Try parsing structured text first
+	result = tuple(_parse_structured_chapters(soup))
+	if not result:
+		result = tuple(_parse_unstructured_chapters(soup))
 	return result
 
 
-def _parse_structured_chapter(chapter_header: bs4.Tag) -> Chapter:
+def _parse_structured_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
+	chapter_headers = tuple(soup.find_all("h2"))
+	if chapter_headers:
+		header_titles = {}
+		for header in chapter_headers:
+			chapter_title = header.find_next("h3")
+			if chapter_title:
+				header_titles[header] = chapter_title
+		if len(header_titles) == len(chapter_headers):
+			result = (_parse_structured_chapter(header, title) for header, title in header_titles.items())
+		else:
+			header_title_pairs = (chapter_headers[idx: idx + 2] for idx in range(0, len(chapter_headers) - 2, 2))
+			result = (_parse_structured_chapter(header, title) for header, title in header_title_pairs)
+	else:
+		result = iter(())
+	return result
+
+
+def _parse_structured_chapter(chapter_header: bs4.Tag, chapter_title: bs4.Tag) -> Chapter:
 	chapter_header_text = normalize_spacing(chapter_header.text)
 	chapter_header_match = CHAPTER_HEADER_PATTERN.match(chapter_header_text)
 	if chapter_header_match:
 		seq = chapter_header_match.group(1)
 	else:
-		seq = chapter_header_text
-	chapter_titles = chapter_header.find_all_next("h3")
-	if chapter_titles:
-		if len(chapter_titles) > 1:
-			raise ValueError("More than one \"h3\" element found; Cannot parse the structure.")
-		chapter_title = chapter_titles[0]
-		title = normalize_spacing(chapter_title.text)
-		pars = chapter_title.find_all_next("p")
-	else:
-		title = ""
-		pars = chapter_header.find_all_next("p")
+		# e.g. "prologue" and "epilogue"
+		seq = chapter_header_text.lower()
+
+	title = normalize_spacing(chapter_title.text)
+	pars = chapter_title.find_all_next("p")
 
 	result = Chapter(seq, title)
 	par_following_ctxs = ((par, tuple(par for par in pars[idx:] if par.text.split())) for idx, par in
