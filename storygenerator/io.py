@@ -1,7 +1,7 @@
 import logging
 import re
 from collections import defaultdict, namedtuple
-from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, Sequence, Tuple, Union
+from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, Sequence, Tuple
 from typing import IO
 
 import bs4
@@ -147,6 +147,8 @@ class EPUBChapterReader(object):
 		logging.info("Reading \"%s\".", infile_path)
 		book_title, chapters = self.__read_file(infile_path)
 		return book_title, chapters
+
+
 # def __call__(self, infile_paths: Iterable[str]) -> Iterator[Tuple[str, List[Chapter]]]:
 # 	book_file_data = self.__read_book_files(infile_paths)
 #
@@ -164,7 +166,13 @@ class HTMLChapterReader(object):
 	@classmethod
 	def __read_file(cls, infile_path: str) -> Tuple[str, Tuple[Chapter, ...]]:
 		with open(infile_path) as inf:
-			return parse_html_book(inf)
+			soup = bs4.BeautifulSoup(inf, "html.parser")
+			book_title = normalize_spacing(soup.head.title.text)
+			logging.debug("Parsing data for book titled \"%s\".", book_title)
+			# For some reason, chapter titles are occasionally in "blockquote" elements
+			pars = soup.find_all(("p", "blockquote"))
+			chapters = tuple(_parse_pars(pars))
+			return book_title, chapters
 
 	def __call__(self, infile_paths: Iterable[str]) -> Iterator[Tuple[str, List[Chapter]]]:
 		book_file_data = defaultdict(dict)
@@ -183,16 +191,6 @@ class HTMLChapterReader(object):
 def normalize_spacing(text: str) -> str:
 	tokens = WHITESPACE_PATTERN.split(text.strip())
 	return " ".join(tokens)
-
-
-def parse_html_book(markup: Union[str, IO[str]]) -> Tuple[str, Tuple[Chapter, ...]]:
-	soup = bs4.BeautifulSoup(markup, "html.parser")
-	book_title = normalize_spacing(soup.head.title.text)
-	logging.debug("Parsing data for book titled \"%s\".", book_title)
-	# For some reason, chapter titles are occasionally in "blockquote" elements
-	pars = soup.find_all(("p", "blockquote"))
-	chapters = tuple(_parse_pars(pars))
-	return book_title, chapters
 
 
 def write_chapters(chapters: Iterable[Chapter], out: IO[str]):
