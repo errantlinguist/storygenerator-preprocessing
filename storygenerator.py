@@ -120,8 +120,8 @@ def normalize_chapter_seq(seq: str) -> str:
 	return result
 
 
-def normalize_spacing(label: str) -> str:
-	tokens = WHITESPACE_PATTERN.split(label.strip())
+def normalize_spacing(text: str) -> str:
+	tokens = WHITESPACE_PATTERN.split(text.strip())
 	return " ".join(tokens)
 
 
