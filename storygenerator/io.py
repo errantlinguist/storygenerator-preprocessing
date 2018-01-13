@@ -115,6 +115,9 @@ class EPUBChapterReader(object):
 		ordered_chapter_descs = sorted((
 			desc for elem in book.get_items_of_type(ebooklib.ITEM_NAVIGATION) for desc in cls.__parse_navigation(elem)),
 			key=lambda desc: chapter_seq_sort_key(desc.seq))
+		if not ordered_chapter_descs:
+			raise ValueError("No navigation elements found!")
+
 		chapters = []
 		for desc in ordered_chapter_descs:
 			doc = book.get_item_with_href(desc.src)
