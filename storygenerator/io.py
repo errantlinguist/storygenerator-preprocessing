@@ -180,7 +180,8 @@ class HTMLChapterReader(object):
 		for infile_path in infile_paths:
 			logging.info("Reading \"%s\".", infile_path)
 			book_title, chapters = self.__read_file(infile_path)
-			book_file_data[book_title][infile_path] = chapters
+			if chapters:
+				book_file_data[book_title][infile_path] = chapters
 		logging.info("Read data for %d book(s): %s", len(book_file_data), sorted(book_file_data.keys()))
 
 		for book_title, file_data in book_file_data.items():
