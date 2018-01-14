@@ -1,3 +1,4 @@
 beautifulsoup4
 ebooklib
+html2text
 python-magic
