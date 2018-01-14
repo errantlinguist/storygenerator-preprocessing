@@ -26,12 +26,17 @@ def walk_epub_files(inpaths: Iterable[str]) -> Iterator[str]:
 	mime = magic.Magic(mime=True)
 
 	for inpath in inpaths:
-		for root, dirs, files in os.walk(inpath, followlinks=True):
-			for file in files:
-				filepath = os.path.join(root, file)
-				mimetype = mime.from_file(filepath)
-				if EPUB_MIMETYPE == mimetype:
-					yield filepath
+		if os.path.isdir(inpath):
+			for root, dirs, files in os.walk(inpath, followlinks=True):
+				for file in files:
+					filepath = os.path.join(root, file)
+					mimetype = mime.from_file(filepath)
+					if EPUB_MIMETYPE == mimetype:
+						yield filepath
+		else:
+			mimetype = mime.from_file(filepath)
+			if EPUB_MIMETYPE == mimetype:
+				yield inpath
 
 
 def __create_argparser() -> argparse.ArgumentParser:

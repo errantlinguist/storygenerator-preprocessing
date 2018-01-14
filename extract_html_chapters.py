@@ -28,11 +28,14 @@ def is_html_file(path: str) -> bool:
 
 def walk_html_files(inpaths: Iterable[str]) -> Iterator[str]:
 	for inpath in inpaths:
-		for root, dirs, files in os.walk(inpath, followlinks=True):
-			for file in files:
-				filepath = os.path.join(root, file)
-				if is_html_file(filepath):
-					yield filepath
+		if os.path.isdir(inpath):
+			for root, dirs, files in os.walk(inpath, followlinks=True):
+				for file in files:
+					filepath = os.path.join(root, file)
+					if is_html_file(filepath):
+						yield filepath
+		elif is_html_file(inpath):
+			yield inpath
 
 
 def __create_argparser() -> argparse.ArgumentParser:
