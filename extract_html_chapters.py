@@ -17,7 +17,7 @@ from typing import Iterable, Iterator
 from storygenerator import natural_keys
 from storygenerator.io import HTMLChapterReader, write_chapters
 
-HTML_FILE_EXTENSION_PATTERN = re.compile("\.htm(l)", re.IGNORECASE)
+HTML_FILE_EXTENSION_PATTERN = re.compile("\.x?html?", re.IGNORECASE)
 
 
 def is_html_file(path: str) -> bool:
