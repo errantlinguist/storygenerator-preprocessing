@@ -65,17 +65,15 @@ def __main(args):
 	reader = EPUBChapterReader()
 	infiles = tuple(sorted(frozenset(walk_epub_files(inpaths)), key=natural_keys))
 	logging.info("Will read %d file(s).", len(infiles))
-	#book_chapters = dict(reader(infiles))
-	book_chapters = dict(reader(infile) for infile in infiles)
-	print("Read data for {} book(s): {}".format(len(book_chapters), sorted(book_chapters.keys())))
-
 	outdir = args.outdir
 	os.makedirs(outdir, exist_ok=True)
-	for book_title, chapters in book_chapters.items():
+	for infile in infiles:
+		book_title, chapters = reader(infile)
 		outfile_path = os.path.join(outdir, book_title + ".txt")
 		print("Writing book titled \"{}\" to \"{}\".".format(book_title, outfile_path))
 		with open(outfile_path, 'w') as outf:
 			write_chapters(chapters, outf)
+	print("Finished writing {} file(s).".format(len(infiles)))
 
 
 if __name__ == "__main__":
