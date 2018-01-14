@@ -222,8 +222,11 @@ def _parse_structured_chapters(soup: bs4.BeautifulSoup) -> Iterator[Chapter]:
 				header_titles[header] = chapter_title
 		if len(header_titles) == len(chapter_headers):
 			result = (_parse_structured_chapter(header, title) for header, title in header_titles.items())
+		elif len(chapter_headers) == 2:
+			chapter = _parse_structured_chapter(chapter_headers[0], chapter_headers[1])
+			return iter((chapter,))
 		else:
-			header_title_pairs = (chapter_headers[idx: idx + 2] for idx in range(0, len(chapter_headers) - 2, 2))
+			header_title_pairs = tuple(chapter_headers[idx: idx + 2] for idx in range(0, len(chapter_headers) - 2, 2))
 			result = (_parse_structured_chapter(header, title) for header, title in header_title_pairs)
 	else:
 		result = iter(())
