@@ -63,7 +63,7 @@ def __main(args):
 	inpaths = args.inpaths
 	print("Will look for data under {}.".format(inpaths), file=sys.stderr)
 	reader = EPUBChapterReader()
-	infiles = tuple(sorted(frozenset(walk_html_files(inpaths)), key=natural_keys))
+	infiles = tuple(sorted(frozenset(walk_epub_files(inpaths)), key=natural_keys))
 	logging.info("Will read %d file(s).", len(infiles))
 	#book_chapters = dict(reader(infiles))
 	book_chapters = dict(reader(infile) for infile in infiles)
