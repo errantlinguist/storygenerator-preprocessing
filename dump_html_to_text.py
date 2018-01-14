@@ -11,6 +11,7 @@ __license__ = "Apache License, Version 2.0"
 import argparse
 import os
 import re
+import sys
 from typing import Iterable, Iterator
 
 import html2text
@@ -48,9 +49,9 @@ def __create_argparser() -> argparse.ArgumentParser:
 
 def __main(args):
 	inpaths = args.inpaths
-	print("Will look for data under {}.".format(inpaths))
+	print("Will look for data under {}.".format(inpaths), file=sys.stderr)
 	infiles = tuple(sorted(frozenset(walk_html_files(inpaths)), key=natural_keys))
-	print("Will read {} file(s).".format(len(infiles)))
+	print("Will read {} file(s).".format(len(infiles)), file=sys.stderr)
 
 	text = []
 	for infile in infiles:
