@@ -7,7 +7,7 @@ __copyright__ = "Copyright (C) 2018 Todd Shore"
 __license__ = "Apache License, Version 2.0"
 
 import re
-from typing import MutableSequence, Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 __DIGITS_PATTERN = re.compile('(\d+)')
 
@@ -15,7 +15,7 @@ __DIGITS_PATTERN = re.compile('(\d+)')
 class Chapter(object):
 
 	def __init__(self, seq: Optional[str] = None, title: Optional[str] = None,
-				 pars: Optional[MutableSequence[str]] = None):
+				 pars: Optional[Sequence[str]] = None):
 		self.seq = seq
 		self.title = title
 		self.pars = [] if pars is None else pars
