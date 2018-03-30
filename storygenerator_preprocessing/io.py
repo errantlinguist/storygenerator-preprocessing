@@ -2,14 +2,17 @@ import itertools
 import logging
 import re
 from collections import defaultdict, namedtuple
-from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple
+from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple, Union
 from typing import IO
 
 import bs4
 import ebooklib
 from ebooklib import epub
 
-from . import Chapter, chapter_seq_sort_key, natural_keys
+from . import Chapter, natural_keys
+
+NON_NUMERIC_CHAPTER_SEQS = frozenset(("prologue", "epilogue"))
+_MAX_NON_NUMERIC_CHAPTER_SEQ_LENGTH = max(len(seq) for seq in NON_NUMERIC_CHAPTER_SEQS)
 
 SINGLE_BOOK_END_PATTERN = re.compile("The\\s+End\\s+of\\s+the\\s+(?:\\w+)\\s+Book\\s+of", re.IGNORECASE)
 MULTI_BOOK_END_PAR_PATTERNS = tuple(
@@ -20,8 +23,6 @@ TITLE_BLACKLIST = frozenset(("cover", "cover page", "title", "title page", "copy
 							 "dedication", "contents", "table of contents", "maps", "glossary",
 							 "about the author", "start"))
 WHITESPACE_PATTERN = re.compile("\\s+")
-
-_MAX_NON_NUMERIC_CHAPTER_SEQ_LENGTH = max(len(seq) for seq in Chapter.NON_NUMERIC_CHAPTER_SEQS)
 
 _ChapterDescription = namedtuple("_ChapterDescription", "seq name src")
 
@@ -157,6 +158,16 @@ class HTMLChapterReader(object):
 			book_chapters = self.__merge_file_chapters(file_data)
 			_validate_chapters(book_chapters)
 			yield book_title, book_chapters
+
+
+def chapter_seq_sort_key(seq: str) -> Tuple[int, Tuple[Union[int, str], ...]]:
+	if seq.lower() == "prologue":
+		group = -1
+	elif seq.lower() == "epilogue":
+		group = 1
+	else:
+		group = 0
+	return group, natural_keys(seq)
 
 
 def normalize_spacing(text: str) -> str:
@@ -314,7 +325,7 @@ def _merge_file_chapters(addend: Sequence[Chapter], augend: MutableSequence[Chap
 def _validate_chapters(chapters: Iterable[Chapter]):
 	prev_seq_key = (float("-inf"), (float("-inf"),))
 	for chapter in chapters:
-		seq_key = chapter.seq_sort_key
+		seq_key = chapter_seq_sort_key(chapter.seq)
 		if prev_seq_key > seq_key:
 			raise ValueError("Chapter is out of order: {}".format(chapter))
 		else:
@@ -324,7 +335,7 @@ def _validate_chapters(chapters: Iterable[Chapter]):
 
 
 def __create_seq_desc(seq: str) -> str:
-	if seq in Chapter.NON_NUMERIC_CHAPTER_SEQS:
+	if seq in NON_NUMERIC_CHAPTER_SEQS:
 		result = seq.upper()
 	else:
 		result = "CHAPTER " + seq
@@ -336,7 +347,7 @@ def __is_non_numeric_chapter_seq(text: str) -> bool:
 		result = False
 	else:
 		lowercased_text = text.lower()
-		result = lowercased_text in Chapter.NON_NUMERIC_CHAPTER_SEQS
+		result = lowercased_text in NON_NUMERIC_CHAPTER_SEQS
 	return result
 
 

@@ -13,7 +13,6 @@ __DIGITS_PATTERN = re.compile('(\d+)')
 
 
 class Chapter(object):
-	NON_NUMERIC_CHAPTER_SEQS = frozenset(("prologue", "epilogue"))
 
 	def __init__(self, seq: Optional[str] = None, title: Optional[str] = None,
 				 pars: Optional[MutableSequence[str]] = None):
@@ -41,20 +40,6 @@ class Chapter(object):
 		fields = ("{seq=", str(self.seq), ", title=", str(self.title), ", pars=", str(self.pars), "}")
 		field_repr = "".join(fields)
 		return self.__class__.__name__ + field_repr
-
-	@property
-	def seq_sort_key(self) -> Tuple[int, Tuple[Union[int, str], ...]]:
-		return chapter_seq_sort_key(self.seq)
-
-
-def chapter_seq_sort_key(seq: str) -> Tuple[int, Tuple[Union[int, str], ...]]:
-	if seq.lower() == "prologue":
-		group = -1
-	elif seq.lower() == "epilogue":
-		group = 1
-	else:
-		group = 0
-	return group, natural_keys(seq)
 
 
 def natural_keys(text: str) -> Tuple[Union[int, str], ...]:
