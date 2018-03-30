@@ -34,7 +34,7 @@ def walk_epub_files(inpaths: Iterable[str]) -> Iterator[str]:
 					if EPUB_MIMETYPE == mimetype:
 						yield filepath
 		else:
-			mimetype = mime.from_file(filepath)
+			mimetype = mime.from_file(inpath)
 			if EPUB_MIMETYPE == mimetype:
 				yield inpath
 
