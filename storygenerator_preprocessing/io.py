@@ -1,13 +1,12 @@
 import itertools
 import logging
 import re
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple
 from typing import IO
 
 import bs4
 import ebooklib
-from collections.__init__ import defaultdict
 from ebooklib import epub
 
 from . import Chapter, chapter_seq_sort_key, natural_keys
