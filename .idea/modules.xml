@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/storygenerator.iml" filepath="$PROJECT_DIR$/.idea/storygenerator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/storygenerator-preprocessing.iml" filepath="$PROJECT_DIR$/.idea/storygenerator-preprocessing.iml" />
     </modules>
   </component>
 </project>

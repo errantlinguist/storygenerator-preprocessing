@@ -14,8 +14,8 @@ import os
 import re
 from typing import Iterable, Iterator
 
-from storygenerator import natural_keys
-from storygenerator.io import HTMLChapterReader, write_chapters
+from storygenerator_preprocessing import natural_keys
+from storygenerator_preprocessing.io import HTMLChapterReader, write_chapters
 
 HTML_FILE_EXTENSION_PATTERN = re.compile("\.x?html?", re.IGNORECASE)
 

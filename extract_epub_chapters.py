@@ -16,8 +16,8 @@ from typing import Iterable, Iterator
 
 import magic
 
-from storygenerator import natural_keys
-from storygenerator.io import EPUBChapterReader, write_chapters
+from storygenerator_preprocessing import natural_keys
+from storygenerator_preprocessing.io import EPUBChapterReader, write_chapters
 
 EPUB_MIMETYPE = "application/epub+zip"
 
