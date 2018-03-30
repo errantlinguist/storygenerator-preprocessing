@@ -11,14 +11,9 @@ __copyright__ = "Copyright (C) 2018 Todd Shore"
 __license__ = "Apache License, Version 2.0"
 
 import argparse
-import re
 import sys
 
 import unidecode
-
-CHAPTER_DELIM = "=" * 64
-CHAPTER_DELIM_PATTERN = re.compile("=+")
-WHITESPACE_PATTERN = re.compile("\\s+")
 
 
 def __create_argparser() -> argparse.ArgumentParser:
