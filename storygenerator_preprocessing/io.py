@@ -1,12 +1,13 @@
 import itertools
 import logging
 import re
-from collections import defaultdict, namedtuple
+from collections import namedtuple
+from typing import Dict, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple
 from typing import IO
-from typing import Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple
 
 import bs4
 import ebooklib
+from collections.__init__ import defaultdict
 from ebooklib import epub
 
 from . import Chapter, chapter_seq_sort_key, natural_keys
@@ -145,7 +146,7 @@ class HTMLChapterReader(object):
 			return book_title, chapters
 
 	def __call__(self, infile_paths: Iterable[str]) -> Iterator[Tuple[str, List[Chapter]]]:
-		book_file_data = defaultdict(dict)
+		book_file_data = defaultdict(dict)  # type: defaultdict[str, Dict[str, Tuple[Chapter, ...]]]
 		for infile_path in infile_paths:
 			logging.info("Reading \"%s\".", infile_path)
 			book_title, chapters = self.__read_file(infile_path)
