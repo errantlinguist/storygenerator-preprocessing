@@ -2,8 +2,8 @@ import itertools
 import logging
 import re
 from collections import defaultdict, namedtuple
-from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple
 from typing import IO
+from typing import Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple
 
 import bs4
 import ebooklib
@@ -97,17 +97,6 @@ class EPUBChapterReader(object):
 		return result
 
 	@classmethod
-	def __read_book_files(cls, infile_paths: Iterable[str]) -> DefaultDict[str, Dict[str, Tuple[Chapter, ...]]]:
-		result = defaultdict(dict)
-		for infile_path in infile_paths:
-			logging.info("Reading \"%s\".", infile_path)
-			book_title, chapters = cls.__read_file(infile_path)
-			if chapters:
-				result[book_title][infile_path] = chapters
-
-		return result
-
-	@classmethod
 	def __read_file(cls, infile_path: str) -> Tuple[str, List[Chapter]]:
 		book = ebooklib.epub.read_epub(infile_path)
 		book_title = normalize_spacing(book.title)
@@ -125,26 +114,6 @@ class EPUBChapterReader(object):
 			chapters.extend(cls.__parse_doc(doc))
 		logging.debug("Parsed %d chapter(s) for book titled \"%s\".", len(chapters), book_title)
 		return book_title, chapters
-
-	@classmethod
-	def __trim_content_beginning(cls, pars: Iterable[bs4.Tag]) -> List[str]:
-		par_texts = []
-		for par in pars:
-			text = par.text.strip()
-			if text:
-				par_texts.append(text)
-
-		if par_texts:
-			start_idx = 0
-			for text in par_texts:
-				# print(start_idx)
-				if not cls.__is_chapter_header(text):
-					break
-			result = par_texts[start_idx:]
-		else:
-			result = par_texts
-
-		return result
 
 	def __call__(self, infile_path) -> Tuple[str, List[Chapter]]:
 		logging.info("Reading \"%s\".", infile_path)
@@ -377,15 +346,6 @@ def __is_toc_header(text: str) -> bool:
 		result = False
 	else:
 		result = text.lower() == toc_title
-	return result
-
-
-def __find_img_par_idx(pars: Sequence[bs4.Tag]) -> int:
-	result = -1
-	for idx, par in enumerate(pars):
-		if par.find("img"):
-			result = idx
-			break
 	return result
 
 
