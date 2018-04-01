@@ -10,8 +10,7 @@ import itertools
 import logging
 import re
 from collections import defaultdict, namedtuple
-from typing import DefaultDict, Dict, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple, Union
-from typing import IO
+from typing import DefaultDict, Dict, IO, Iterable, Iterator, List, Mapping, MutableSequence, Sequence, Tuple, Union
 
 import bs4
 import ebooklib
