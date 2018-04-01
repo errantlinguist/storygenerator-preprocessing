@@ -11,7 +11,6 @@ __license__ = "Apache License, Version 2.0"
 import argparse
 import logging
 import os
-import sys
 from typing import Callable, Iterable, Iterator
 
 import magic
@@ -65,7 +64,7 @@ def __main(args):
 		logging.basicConfig(level=logging.INFO)
 
 	inpaths = args.inpaths
-	print("Will look for data under {}.".format(inpaths), file=sys.stderr)
+	print("Will look for data under {}.".format(inpaths))
 	file_walker = MimetypeFileWalker(lambda mimetype: mimetype == EPUB_MIMETYPE)
 	infiles = tuple(sorted(frozenset(file_walker(inpaths)), key=natural_keys))
 	reader = EPUBChapterReader()
