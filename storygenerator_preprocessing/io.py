@@ -19,7 +19,9 @@ from ebooklib import epub
 
 from . import Chapter, natural_keys
 
-NON_NUMERIC_CHAPTER_SEQS = frozenset(("prologue", "epilogue"))
+PROLOGUE_TITLE = "prologue"
+EPILOGUE_TITLE = "epilogue"
+NON_NUMERIC_CHAPTER_SEQS = frozenset((PROLOGUE_TITLE, EPILOGUE_TITLE))
 _MAX_NON_NUMERIC_CHAPTER_SEQ_LENGTH = max(len(seq) for seq in NON_NUMERIC_CHAPTER_SEQS)
 
 SINGLE_BOOK_END_PATTERN = re.compile("The\\s+End\\s+of\\s+the\\s+(?:\\w+)\\s+Book\\s+of", re.IGNORECASE)
@@ -61,10 +63,10 @@ class EPUBChapterReader(object):
 		else:
 			result = seq
 
-		if result.startswith("prologue"):
-			result = "PROLOGUE"
-		elif result.startswith("epilogue"):
-			result = "EPILOGUE"
+		if result.startswith(PROLOGUE_TITLE):
+			result = PROLOGUE_TITLE.upper()
+		elif result.startswith(EPILOGUE_TITLE):
+			result = EPILOGUE_TITLE.upper()
 
 		return result
 
@@ -169,9 +171,9 @@ class HTMLChapterReader(object):
 
 
 def chapter_seq_sort_key(seq: str) -> Tuple[int, Tuple[Union[int, str], ...]]:
-	if seq.lower() == "prologue":
+	if seq.lower() == PROLOGUE_TITLE:
 		group = -1
-	elif seq.lower() == "epilogue":
+	elif seq.lower() == EPILOGUE_TITLE:
 		group = 1
 	else:
 		group = 0
