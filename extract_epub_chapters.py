@@ -12,7 +12,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import Iterable, Iterator
+from typing import Callable, Iterable, Iterator
 
 import magic
 
@@ -22,21 +22,25 @@ from storygenerator_preprocessing.io import EPUBChapterReader, write_chapters
 EPUB_MIMETYPE = "application/epub+zip"
 
 
-def walk_epub_files(inpaths: Iterable[str]) -> Iterator[str]:
-	mime = magic.Magic(mime=True)
+class MimetypeFileWalker(object):
 
-	for inpath in inpaths:
-		if os.path.isdir(inpath):
-			for root, dirs, files in os.walk(inpath, followlinks=True):
-				for file in files:
-					filepath = os.path.join(root, file)
-					mimetype = mime.from_file(filepath)
-					if EPUB_MIMETYPE == mimetype:
-						yield filepath
-		else:
-			mimetype = mime.from_file(inpath)
-			if EPUB_MIMETYPE == mimetype:
-				yield inpath
+	def __init__(self, mimetype_matcher: Callable[[str], bool]):
+		self.mimetype_matcher = mimetype_matcher
+		self.__mime = magic.Magic(mime=True)
+
+	def __call__(self, inpaths: Iterable[str]) -> Iterator[str]:
+		for inpath in inpaths:
+			if os.path.isdir(inpath):
+				for root, _, files in os.walk(inpath, followlinks=True):
+					for file in files:
+						filepath = os.path.join(root, file)
+						mimetype = self.__mime.from_file(filepath)
+						if self.mimetype_matcher(mimetype):
+							yield filepath
+			else:
+				mimetype = self.__mime.from_file(inpath)
+				if self.mimetype_matcher(mimetype):
+					yield inpath
 
 
 def __create_argparser() -> argparse.ArgumentParser:
@@ -62,8 +66,9 @@ def __main(args):
 
 	inpaths = args.inpaths
 	print("Will look for data under {}.".format(inpaths), file=sys.stderr)
+	file_walker = MimetypeFileWalker(lambda mimetype: mimetype == EPUB_MIMETYPE)
+	infiles = tuple(sorted(frozenset(file_walker(inpaths)), key=natural_keys))
 	reader = EPUBChapterReader()
-	infiles = tuple(sorted(frozenset(walk_epub_files(inpaths)), key=natural_keys))
 	logging.info("Will read %d file(s).", len(infiles))
 	outdir = args.outdir
 	os.makedirs(outdir, exist_ok=True)
