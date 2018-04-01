@@ -16,6 +16,11 @@ class Chapter(object):
 
 	def __init__(self, seq: Optional[str] = None, title: Optional[str] = None,
 				 pars: Optional[Sequence[str]] = None):
+		"""
+		:param seq: The chapter sequence description, e.g. "CHAPTER 1", "PROLOGUE" or "EPILOGUE"
+		:param title: The chapter title
+		:param pars A sequence of strings, each representing a single paragraph.
+		"""
 		self.seq = seq
 		self.title = title
 		self.pars = [] if pars is None else pars
